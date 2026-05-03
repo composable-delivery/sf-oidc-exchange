@@ -1,0 +1,82 @@
+name: Busbar Exchange Action
+description: >
+  Exchange a GitHub Actions OIDC token for a short-lived Salesforce access token
+  using RFC 8693 Token Exchange. No stored credentials required.
+author: Composable Delivery
+
+branding:
+  icon: key
+  color: orange
+
+inputs:
+  sf-token-endpoint:
+    description: >
+      Salesforce instance URL of the target org.
+      Example: https://myorg.my.salesforce.com
+    required: true
+
+  oidc-audience:
+    description: >
+      Audience value to embed in the GitHub OIDC token. Defaults to
+      sf-token-endpoint, which binds the token to the target org so a leaked
+      OIDC token cannot be replayed against a different org.
+    required: false
+    default: ''
+
+  token-handler-apex:
+    description: >
+      Developer name of the Apex OauthTokenExchangeHandler registered in the
+      target org. Defaults to BBGitHubTokenExchangeHandler (the Busbar managed
+      package handler).
+    required: false
+    default: 'BBGitHubTokenExchangeHandler'
+
+  sf-alias:
+    description: >
+      Alias to assign to the authenticated org in the Salesforce CLI. Downstream
+      steps can reference the org with --target-org or the alias directly.
+    required: false
+    default: 'busbar'
+
+  set-default-org:
+    description: >
+      Set the authenticated org as the default Salesforce CLI org for subsequent
+      steps. Set to 'false' when authenticating multiple orgs in the same job.
+    required: false
+    default: 'true'
+
+  sf-login:
+    description: >
+      Register the exchanged token with the Salesforce CLI (sf org login
+      access-token). Set to 'false' to skip CLI registration and use the
+      access-token output directly.
+    required: false
+    default: 'true'
+
+outputs:
+  access-token:
+    description: Short-lived Salesforce access token (5-minute lifetime).
+    value: ${{ steps.exchange.outputs.access_token }}
+
+  instance-url:
+    description: Salesforce instance URL of the authenticated org.
+    value: ${{ steps.exchange.outputs.instance_url }}
+
+  sf-alias:
+    description: Salesforce CLI alias assigned to the authenticated org.
+    value: ${{ steps.exchange.outputs.sf_alias }}
+
+runs:
+  using: composite
+  steps:
+    - name: Exchange OIDC token for Salesforce access token
+      id: exchange
+      shell: bash
+      env:
+        SF_TOKEN_ENDPOINT_BASE: ${{ inputs.sf-token-endpoint }}
+        OIDC_AUDIENCE: ${{ inputs.oidc-audience }}
+        TOKEN_HANDLER_APEX: ${{ inputs.token-handler-apex }}
+        TARGET_ALIAS: ${{ inputs.sf-alias }}
+        SET_DEFAULT_ORG: ${{ inputs.set-default-org }}
+        SF_LOGIN: ${{ inputs.sf-login }}
+      run: bash "${{ github.action_path }}/scripts/exchange.sh"
