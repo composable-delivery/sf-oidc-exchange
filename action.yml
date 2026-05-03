@@ -45,6 +45,15 @@ inputs:
     required: false
     default: 'true'
 
+  eca-client-id:
+    description: >
+      Consumer key (client_id) of the Busbar External Client App in the target
+      org. The managed package ships a fixed value that is the same in every
+      subscriber org; only override this when targeting a non-managed or
+      dev-edition ECA with a different consumer key.
+    required: false
+    default: ''
+
   sf-login:
     description: >
       Register the exchanged token with the Salesforce CLI (sf org login
@@ -76,6 +85,7 @@ runs:
         SF_TOKEN_ENDPOINT_BASE: ${{ inputs.sf-token-endpoint }}
         OIDC_AUDIENCE: ${{ inputs.oidc-audience }}
         TOKEN_HANDLER_APEX: ${{ inputs.token-handler-apex }}
+        ECA_CLIENT_ID: ${{ inputs.eca-client-id }}
         TARGET_ALIAS: ${{ inputs.sf-alias }}
         SET_DEFAULT_ORG: ${{ inputs.set-default-org }}
         SF_LOGIN: ${{ inputs.sf-login }}
